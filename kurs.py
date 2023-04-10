@@ -5,14 +5,7 @@ import os
 
 class VKDownload():
     url = 'https://api.vk.com/method/'
-
-
-    def likes(self):
-        likes_params = {
-            'type': 'photo'
-        }
-        req = requests.get(self.url + 'likes.getList', params={**self.params, **likes_params}).json()
-        pprint(req)
+    filenames = []
 
     def profile_photos(self):
         profile_photos_params = {
@@ -20,156 +13,41 @@ class VKDownload():
         }
         profile_photos = requests.get(self.url + 'photos.get', params={**self.params, **profile_photos_params} ).json()
         sizes_list = profile_photos['response']['items']
-        pprint(sizes_list)
 
         profile_photos_urls = []
         for photo in sizes_list:
             types = []
-            for size in photo['sizes']:
-                types.append(size['type'])
-            print(types)
 
             for size in photo['sizes']:
-                if size['type'] == 'w':
-                    # print(size['type'])
-                    # print(size['url'])
-                    # profile_photos_urls.append(size['url'])
-                    photo_data = {'album_id': photo['album_id'],
-                                  'has_tags': photo['has_tags'],
-                                  'owner_id': photo['owner_id'],
-                                  'post_id': photo['post_id'],
+                types.append(size['type'])
+
+            for size in photo['sizes']:
+                types.append(size['type'])
+                if size['type'] == 'w' or size['type'] == 'z' or size['type'] == max(types):
+                    photo_data = {
                                   'date': photo['date'],
                                   'url': size['url']
                                   }
                     profile_photos_urls.append(photo_data)
-                elif size['type'] == max(types):
-                    # print(f'we have {max(types)}')
-                    # print(size['url'])
-                    # profile_photos_urls.append(size['url'])
-                    photo_data = {'album_id': photo['album_id'],
-                                  'has_tags': photo['has_tags'],
-                                  'owner_id': photo['owner_id'],
-                                  'post_id': photo['post_id'],
-                                  'date': photo['date'],
-                                  'url': size['url']
-                                  }
-                    profile_photos_urls.append(photo_data)
-        print()
         return profile_photos_urls
-
-    def wall_photos(self):
-        wall_photos_params = {
-            'album_id': 'wall'
-        }
-        wall_photos = requests.get(self.url + 'photos.get', params={**self.params, **wall_photos_params} ).json()
-        sizes_list = wall_photos['response']['items']
-        # pprint(sizes_list)
-
-        wall_photos_urls = []
-        for photo in sizes_list:
-            types = []
-            for size in photo['sizes']:
-                types.append(size['type'])
-            # print(types)
-
-            for size in photo['sizes']:
-                if size['type'] == 'w':
-                    # print(size['type'])
-                    # print(size['url'])
-                    # wall_photos_urls.append(size['url'])
-                    photo_data = {'album_id': photo['album_id'],
-                                  'has_tags': photo['has_tags'],
-                                  'owner_id': photo['owner_id'],
-                                  'post_id': photo['post_id'],
-                                  'date': photo['date'],
-                                  'url': size['url']
-                                  }
-                    wall_photos_urls.append(photo_data)
-                elif size['type'] == max(types):
-                    # print(f'we have {max(types)}')
-                    # print(size['url'])
-                    # wall_photos_urls.append(size['url'])
-                    photo_data = {'album_id': photo['album_id'],
-                                  'has_tags': photo['has_tags'],
-                                  'owner_id': photo['owner_id'],
-                                  'post_id': photo['post_id'],
-                                  'date': photo['date'],
-                                  'url': size['url']
-                                  }
-                    wall_photos_urls.append(photo_data)
-        print()
-        return wall_photos_urls
-
-    def saved_photos(self):
-        saved_photos_params = {
-            'album_id': 'saved'
-        }
-        saved_photos = requests.get(self.url + 'photos.get', params={**self.params, **saved_photos_params} ).json()
-        sizes_list = saved_photos['response']['items']
-        # pprint(sizes_list)
-        # pprint(saved_photos)
-        print(len(sizes_list))
-
-        saved_photos_urls = []
-        for photo in sizes_list:
-            types = []
-            for size in photo['sizes']:
-                types.append(size['type'])
-            # print(types)
-
-            for size in photo['sizes']:
-                if size['type'] == 'w':
-                    # print(size['type'])
-                    # print(size['url'])
-                    # saved_photos.append(size['url'])
-                    photo_data = {'album_id': photo['album_id'],
-                                  'has_tags': photo['has_tags'],
-                                  'owner_id': photo['owner_id'],
-                                  'post_id': photo['id'],
-                                  'date': photo['date'],
-                                  'url': size['url']
-                                  }
-                    saved_photos_urls.append(photo_data)
-                elif size['type'] == max(types):
-                    # print(f'we have {max(types)}')
-                    # print(size['url'])
-                    # saved_photos.append(size['url'])
-                    photo_data = {'album_id': photo['album_id'],
-                                  'has_tags': photo['has_tags'],
-                                  'owner_id': photo['owner_id'],
-                                  'post_id': photo['id'],
-                                  'date': photo['date'],
-                                  'url': size['url']
-                                  }
-                    saved_photos_urls.append(photo_data)
-        print()
-        # pprint(saved_photos_urls)
-        return saved_photos_urls
 
     def one_photos_list(self):
         all_urls = []
         all_urls.extend(self.profile_photos())
-        all_urls.extend(self.wall_photos())
-        all_urls.extend(self.saved_photos())
-
         return all_urls
 
     def downloading(self):
         os.mkdir('reserve_copy')
         photos = self.one_photos_list()
-        pprint(photos)
-        print(len(photos))
-        global filenames
-        filenames = []
         for picture in photos:
-            pprint(picture)
             r = requests.get(picture['url'])
             with open(f'reserve_copy/{picture["date"]}.jpg', 'wb') as file:
                 file.write(r.content)
                 filename = f'{picture["date"]}.jpg'
-                filenames.append(filename)
+                self.filenames.append(filename)
+                print(f'file {picture["date"]}.jpg downloaded')
 
-        return filenames
+        return self.filenames
 
 
 class YandexDisk():
@@ -185,14 +63,12 @@ class YandexDisk():
         headers = self.get_headers()
         response = requests.get(files_url, headers=headers)
         return response.json()
-        # pprint(response.json())
 
     def _get_upload_link(self, disk_file_path):
         upload_url = "https://cloud-api.yandex.net/v1/disk/resources/upload"
         headers = self.get_headers()
         params = {"path": disk_file_path, "overwrite": "true"}
         response = requests.get(upload_url, headers=headers, params=params)
-        # pprint(response.json())
         return response.json()
 
     def upload_file_to_disk(self, disk_file_path, filename):
@@ -225,7 +101,7 @@ class Launcher(VKDownload, YandexDisk):
             'v': '5.131',
         }
 
-vk_token = ""
+vk_token = ''
 token = ''
 
 a = Launcher(vk_token, token)
